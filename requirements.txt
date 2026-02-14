@@ -5,3 +5,6 @@ scikit-learn
 joblib
 python-multipart
 shap
+Flask
+requests
+python-dotenv

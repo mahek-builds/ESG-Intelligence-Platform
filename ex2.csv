@@ -1,0 +1,4 @@
+Firm_ID,Year,E_Score,S_Score,G_Score,ROA,ROE,Net_Profit_Margin,Revenue,Operating_Cost,Innovation_Spending,carbon_emissions,energy_consumption,renewable_energy_percent,water_usage,waste_generated
+MFG1021,2022,68.45,70.12,64.38,8.75,14.22,6.89,198.45,150.32,4.12,175.3,320.4,30.0,420.0,110.0
+MFG1022,2023,82.34,75.67,78.90,9.88,16.45,8.12,245.67,180.50,6.75,120.4,260.8,50.0,300.0,70.0
+MFG1023,2021,59.12,55.33,60.41,5.98,11.34,4.50,176.89,160.45,3.21,220.0,420.0,20.0,510.0,160.0
