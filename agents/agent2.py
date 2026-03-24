@@ -12,13 +12,12 @@ def run_agent2(input_path, output_path):
 
     os.makedirs(output_path, exist_ok=True)
     output_file = os.path.join(output_path, "agent2_financial_output.csv")
-
-    df.to_csv(output_file, index=False)
-
+    return df.to_dict(orient="records")
 
 
-if __name__ == "__main__":
-    run_agent2(
-        input_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs\agent1_operational_output.csv",
-        output_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs"
-    )
+
+# if __name__ == "__main__":
+#     run_agent2(
+#         input_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs\agent1_operational_output.csv",
+#         output_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs"
+#     )

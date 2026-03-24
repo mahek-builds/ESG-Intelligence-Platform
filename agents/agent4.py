@@ -34,8 +34,4 @@ def run_agent4(input_path, output_path):
 
 
 
-if __name__ == "__main__":
-    run_agent4(
-        input_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs\agent3_compliance_output.csv",
-        output_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs\agent4_final_output.csv"
-    )
+return AGENT4_output.to_dict(orient="records")

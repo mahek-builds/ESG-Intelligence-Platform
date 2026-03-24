@@ -32,13 +32,14 @@ def run_agent3(input_path, output_path):
 
     os.makedirs(os.path.dirname(output_path), exist_ok=True)
     df.to_csv(output_path, index=False)
+    return df.to_dict(orient="records")
 
 
 
 
-if __name__ == "__main__":
-    run_agent3(
-        input_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs\agent2_financial_output.csv",
-        output_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs\agent3_compliance_output.csv"
-    )
+# if __name__ == "__main__":
+#     run_agent3(
+#         input_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs\agent2_financial_output.csv",
+#         output_path=r"C:\Users\HP\Desktop\ESG-Monitoring-System\outputs\agent3_compliance_output.csv"
+#     )
 
