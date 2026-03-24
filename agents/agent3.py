@@ -1,11 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
-
-BASE_DIR = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT_DIR = BASE_DIR / "outputs"
-DEFAULT_INPUT_FILE = DEFAULT_OUTPUT_DIR / "agent2_financial_output.csv"
-DEFAULT_OUTPUT_FILE = DEFAULT_OUTPUT_DIR / "agent3_compliance_output.csv"
+from agents.output_paths import get_agent_output_path, get_company_name
 
 
 def check_environment(row):
@@ -23,8 +19,16 @@ def check_governance(row):
 
 
 def run_agent3(input_path=None, output_path=None):
-    source = Path(input_path) if input_path else DEFAULT_INPUT_FILE
-    target = Path(output_path) if output_path else DEFAULT_OUTPUT_FILE
+    company_name = get_company_name()
+    source = Path(input_path) if input_path else get_agent_output_path(
+        "agent2_financial_output",
+        company_name=company_name,
+    )
+    target = Path(output_path) if output_path else get_agent_output_path(
+        "agent3_compliance_output",
+        company_name=company_name,
+        input_path=source,
+    )
 
     if not source.exists():
         return {

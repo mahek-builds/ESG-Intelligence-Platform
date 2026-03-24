@@ -1,113 +1,74 @@
 import os
+import sys
 from pathlib import Path
 
+CURRENT_FILE = Path(__file__).resolve()
+PROJECT_ROOT = CURRENT_FILE.parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
 import pandas as pd
-
-try:
-    from sqlalchemy import create_engine, inspect
-except ImportError:  # Optional until the sync endpoint is used with a real DB.
-    create_engine = None
-    inspect = None
-
 from dotenv import load_dotenv
-
-load_dotenv()
-
-BASE_DIR = Path(__file__).resolve().parents[1]
-DEFAULT_OUTPUT_DIR = BASE_DIR / "outputs"
-DEFAULT_SAMPLE_CSV = BASE_DIR / "csv files" / "basic_sample.csv"
+from pymongo import MongoClient
+from agents.output_paths import ENV_FILE, get_agent_output_path, get_company_name
 
 
-def run_agent1(user_mapping, output_path):
-    if create_engine is None or inspect is None:
-        return {
-            "status": "error",
-            "message": "Missing dependency: sqlalchemy. Install project requirements to use database sync.",
-        }
-
-    db_url = os.getenv("COMPANY_DB_URL")
-    if not db_url:
-        return {
-            "status": "error",
-            "message": "COMPANY_DB_URL is not set.",
-        }
-
-    engine = create_engine(db_url)
-
-    try:
-        inspector = inspect(engine)
-        db_columns = [col["name"] for col in inspector.get_columns(user_mapping["table"])]
-
-        required_keys = ["year_col", "ind_col", "env_col", "soc_col", "gov_col", "board_col"]
-        missing_columns = []
-
-        for key in required_keys:
-            col_name = user_mapping[key]
-            if col_name not in db_columns:
-                missing_columns.append(col_name)
-
-        if missing_columns:
-            return {
-                "status": "error",
-                "message": f"Mapping failed. The following columns do not exist in the database: {', '.join(missing_columns)}",
-                "available_columns": db_columns,
-            }
-
-        query = f"""
-        SELECT
-            {user_mapping['year_col']} AS Year,
-            {user_mapping['ind_col']} AS Industry_Type,
-            {user_mapping['env_col']} AS E_Score,
-            {user_mapping['soc_col']} AS S_Score,
-            {user_mapping['gov_col']} AS G_Score,
-            {user_mapping['board_col']} AS Board_Independence
-        FROM {user_mapping['table']}
-        """
-
-        df = pd.read_sql(query, engine)
-        df = df.dropna().reset_index(drop=True)
-
-        output_dir = Path(output_path)
-        output_dir.mkdir(parents=True, exist_ok=True)
-        output_file = output_dir / "agent1_operational_output.csv"
-        df.to_csv(output_file, index=False)
-
-        return {
-            "status": "success",
-            "message": "Data successfully fetched and mapped",
-            "file_path": str(output_file),
-        }
-
-    except Exception as exc:
-        return {
-            "status": "error",
-            "message": f"System Error: {exc}",
-        }
+def _build_result(status, message, **extra):
+    payload = {
+        "status": status,
+        "message": message,
+    }
+    payload.update(extra)
+    return payload
 
 
-def sync_and_clean_pipeline(sample_csv_path=None, output_dir=None):
-    input_csv = Path(sample_csv_path) if sample_csv_path else DEFAULT_SAMPLE_CSV
-    target_dir = Path(output_dir) if output_dir else DEFAULT_OUTPUT_DIR
-    target_dir.mkdir(parents=True, exist_ok=True)
+def run_agent1(output_path=None):
+    load_dotenv(ENV_FILE, override=True)
+    db_name = get_company_name()
+    target = Path(output_path) if output_path else get_agent_output_path(
+        "agent1_operational_output",
+        company_name=db_name,
+    )
+    target.parent.mkdir(parents=True, exist_ok=True)
 
-    if not input_csv.exists():
-        return {
-            "status": "error",
-            "message": f"Sample input file not found: {input_csv}",
-        }
+    print("Agent 1: Fetching verified data from MongoDB...")
+
+    uri = os.getenv("MONGO_URI", "mongodb://localhost:27017")
+    collection_name = os.getenv("MONGO_COLLECTION", "raw_firm_data")
 
     try:
-        df = pd.read_csv(input_csv).dropna().reset_index(drop=True)
-        output_file = target_dir / "agent1_operational_output.csv"
-        df.to_csv(output_file, index=False)
-        return {
-            "status": "success",
-            "message": "Agent 1 completed successfully",
-            "file_path": str(output_file),
-            "rows_processed": int(len(df)),
-        }
+        client = MongoClient(uri, serverSelectionTimeoutMS=5000)
+        client.admin.command("ping")
+
+        collection = client[db_name][collection_name]
+        raw_data = list(collection.find({}, {"_id": 0}))
+
+        if not raw_data:
+            return _build_result(
+                "error",
+                f"No data found in {db_name} -> {collection_name}. Please check your database.",
+            )
+
+        df = pd.DataFrame(raw_data).dropna().reset_index(drop=True)
+        df.to_csv(target, index=False)
+
+        print(f"Success: {len(df)} records saved to {target}")
+
+        return _build_result(
+            "success",
+            "Data successfully fetched from MongoDB.",
+            file_path=str(target),
+            rows_processed=len(df),
+            source_database=db_name,
+            source_collection=collection_name,
+        )
     except Exception as exc:
-        return {
-            "status": "error",
-            "message": f"Agent 1 failed: {exc}",
-        }
+        return _build_result("error", f"Agent 1 failed: {exc}")
+
+
+def sync_and_clean_pipeline(output_path=None):
+    return run_agent1(output_path=output_path)
+
+
+if __name__ == "__main__":
+    print(run_agent1())

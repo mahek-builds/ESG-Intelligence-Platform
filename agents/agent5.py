@@ -3,6 +3,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
+from agents.output_paths import get_agent_output_path, get_company_name
 
 try:
     import shap
@@ -11,7 +12,6 @@ except ImportError:
 
 BASE_DIR = Path(__file__).resolve().parents[1]
 MODEL_PATH = BASE_DIR / "models" / "risk_model.pkl"
-DEFAULT_INPUT_FILE = BASE_DIR / "outputs" / "agent4_final_output.csv"
 
 
 def generate_explanation(df, model):
@@ -57,7 +57,11 @@ def run_agent5(input_path=None):
     if not MODEL_PATH.exists():
         return {"error": f"Model file not found: {MODEL_PATH}"}
 
-    source = Path(input_path) if input_path else DEFAULT_INPUT_FILE
+    company_name = get_company_name()
+    source = Path(input_path) if input_path else get_agent_output_path(
+        "agent4_final_output",
+        company_name=company_name,
+    )
     if not source.exists():
         return {"error": f"Input file not found: {source}. Run Agent 4 first."}
 
