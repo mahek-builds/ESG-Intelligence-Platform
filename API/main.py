@@ -1,9 +1,10 @@
+import os
+import asyncio
+import threading
+import joblib
 from fastapi import FastAPI, BackgroundTasks
 from fastapi.middleware.cors import CORSMiddleware
 import socketio
-import threading
-import joblib
-import os
 
 # Import individual agent routers
 from API.agent1_routes import router as agent1
@@ -17,7 +18,7 @@ from agents.agent1_premium import run_agent1_premium
 
 app = FastAPI(title="ESG Multi-Agent Monitoring System")
 
-# 1. Setup Socket.IO Server (No separate manager file)
+# 1. Setup Socket.IO Server
 sio = socketio.AsyncServer(async_mode='asgi', cors_allowed_origins="*")
 socket_app = socketio.ASGIApp(sio, app)
 
@@ -40,23 +41,22 @@ app.include_router(agent3)
 app.include_router(agent4)
 app.include_router(agent5)
 
-# --- 💎 PREMIUM ROUTE ---
+# --- 💎 PREMIUM ROUTE (Fixed) ---
 @app.post("/api/premium/agent1/start")
 async def activate_premium_agent1(company_id: str = "company3"):
     """
-    Starts the Agent 1 Premium background thread.
-    Passes the sio.emit function directly as a callback.
+    Starts the Agent 1 Premium background thread safely.
     """
     try:
-        # Define the wrapper to bridge Async SIO with the Python Thread
-        def socket_callback(event, data):
-            # Use sio.emit inside a synchronous wrapper if needed
-            import asyncio
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            loop.run_until_complete(sio.emit(event, data))
+        # 1. Main loop ka reference lenge
+        main_loop = asyncio.get_running_loop()
 
-        # Start the watcher in a background thread
+        # 2. Corrected Callback: Thread-safe tareeke se emit karega
+        def socket_callback(event, data):
+            # Bina naya loop banaye, main loop par task schedule karega
+            asyncio.run_coroutine_threadsafe(sio.emit(event, data), main_loop)
+
+        # 3. Start the watcher thread
         thread = threading.Thread(
             target=run_agent1_premium, 
             args=(socket_callback, company_id)
@@ -75,5 +75,9 @@ async def activate_premium_agent1(company_id: str = "company3"):
 def home():
     return {"message": "ESG Multi-Agent API Running Successfully"}
 
+# Start using: uvicorn main:socket_app --host 0.0.0.0 --port 5000
+
 # --- IMPORTANT: SOCKET.IO ENTRY POINT ---
 # Run this file using: uvicorn main:socket_app --host 0.0.0.0 --port 5000[]
+# # --- IMPORTANT: SOCKET.IO ENTRY POINT ---
+# # Run this file using: uvicorn main:socket_app --host 0.0.0.0 --port 5000[]

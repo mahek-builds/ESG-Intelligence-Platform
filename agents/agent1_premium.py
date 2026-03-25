@@ -12,13 +12,12 @@ CONFIG_DIR = BASE_DIR / "config"
 
 def run_agent1_premium(emit_callback, company_id="company3"):
     """
-     PREMIUM AGENT 1: 
-    Listens to MongoDB, applies Client-Specific Mapping, 
-    and streams Standardized data via WebSockets.
+     AGENT 1 PRIME (PREMIUM): 
+    Real-time MongoDB Listener using a robust while-loop.
     """
     print(f" Agent 1 Premium: Real-time Listener active for {company_id}...")
 
-    # 1. Load the Client Mapping (The "Translation" dictionary)
+    # 1. Load the Client Mapping
     mapping_file = CONFIG_DIR / f"{company_id}_mapping.json"
     if not mapping_file.exists():
         print(f" Error: Mapping file missing for {company_id}")
@@ -32,33 +31,41 @@ def run_agent1_premium(emit_callback, company_id="company3"):
     db_name = os.getenv("MONGO_DB_NAME", company_id)
     collection_name = os.getenv("MONGO_COLLECTION", "raw_firm_data")
 
-    try:
-        client = MongoClient(uri)
-        collection = client[db_name][collection_name]
+    # While loop recursion se bachata hai aur auto-reconnect handle karta hai
+    while True:
+        try:
+            client = MongoClient(uri)
+            collection = client[db_name][collection_name]
 
-        # 3. Watch for Live Insertions
-        with collection.watch([{"$match": {"operationType": "insert"}}]) as stream:
-            for change in stream:
-                raw_doc = change['fullDocument']
+            # 3. Watch for Live Insertions (updateLookup helps with data consistency)
+            pipeline = [{"$match": {"operationType": "insert"}}]
+            
+            with collection.watch(pipeline, full_document="updateLookup") as stream:
+                print(f" Change Stream connected. Watching {collection_name}...")
                 
-                # 4. Standardize the Data (Mapping Task)
-                # We translate "environme" -> "E_Score", etc., based on the UI mapping
-                standardized_data = {}
-                for standard_col, client_col in client_mapping.items():
-                    standardized_data[standard_col] = raw_doc.get(client_col)
+                for change in stream:
+                    raw_doc = change['fullDocument']
+                    
+                    # 4. Standardize the Data
+                    standardized_data = {}
+                    for standard_col, client_col in client_mapping.items():
+                        standardized_data[standard_col] = raw_doc.get(client_col)
 
-                # Add Metadata
-                standardized_data["Firm_ID"] = raw_doc.get("Firm_ID", "Unknown")
-                standardized_data["Sync_Time"] = time.strftime('%H:%M:%S')
-                standardized_data["Type"] = "PREMIUM_REALTIME_MAPPED"
+                    # Add Metadata
+                    standardized_data["Firm_ID"] = raw_doc.get("Firm_ID", "Unknown")
+                    standardized_data["Sync_Time"] = time.strftime('%H:%M:%S')
+                    standardized_data["Type"] = "PREMIUM_REALTIME_MAPPED"
 
-                # 5. Emit via WebSocket Callback
-                # Injected from main.py
-                emit_callback('agent1_live_operational', standardized_data)
-                
-                print(f" [Agent 1 Premium] Streamed mapped data for: {standardized_data['Firm_ID']}")
+                    # 5. Emit via WebSocket Callback
+                    # Is 'event_name' ko frontend par listen karein
+                    emit_callback('agent1_live_operational', standardized_data)
+                    
+                    print(f" [Agent 1 Premium] Streamed data for: {standardized_data['Firm_ID']}")
 
-    except Exception as e:
-        print(f" Agent 1 Premium failed: {e}")
-        time.sleep(5) 
-        run_agent1_premium(emit_callback, company_id)
+        except Exception as e:
+            print(f" Agent 1 Premium connection lost: {e}. Retrying in 5 seconds...")
+            # Connection close karke wait karenge
+            if 'client' in locals():
+                client.close()
+            time.sleep(5) 
+            continue # Loop dubara start hoga bina recursion depth badhaye
