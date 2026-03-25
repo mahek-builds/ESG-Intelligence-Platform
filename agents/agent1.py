@@ -107,3 +107,4 @@ def sync_and_clean_pipeline(company_id=None, output_dir=None):
 
 if __name__ == "__main__":
     run_explicit_agent1()
+
