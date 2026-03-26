@@ -1,4 +1,0 @@
-INFO:     127.0.0.1:56041 - "GET / HTTP/1.1" 200 OK
-Agent 1: Fetching verified data from MongoDB...
-Success: 5 records saved to C:\Users\HP\Desktop\ESG-Intelligence-Platform\outputs\company3\company3_agent1_operational_output.csv
-INFO:     127.0.0.1:56041 - "POST /agent1/sync HTTP/1.1" 200 OK

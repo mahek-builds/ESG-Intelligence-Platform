@@ -24,7 +24,6 @@ def run_agent4(input_path=None, output_path=None, company_id=None):
     try:
         df = pd.read_csv(source)
 
-        # Normalize firm identifier across datasets.
         if "Firm_ID" not in df.columns:
             if "firm_id" in df.columns:
                 df = df.rename(columns={"firm_id": "Firm_ID"})

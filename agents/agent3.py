@@ -19,13 +19,12 @@ def check_governance(row):
     if board_independence is None and "Board_Independence (%)" in row.index:
         board_independence = row.get("Board_Independence (%)")
 
-    # Support both 0-1 and 0-100 scales, and tolerate missing values.
     board_violation = False
     if pd.notna(board_independence):
         threshold = 50 if board_independence > 1 else 0.5
         board_violation = board_independence < threshold
 
-    if pd.notna(g_score) and g_score < 60 or board_violation:
+    if (pd.notna(g_score) and g_score < 60) or board_violation:
         return "Violation"
     return "Compliant"
 

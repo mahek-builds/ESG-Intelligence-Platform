@@ -23,6 +23,9 @@ REQUIRED_COLUMNS = [
     "ROE",
     "Net Profit Margin",
 ]
+OPTIONAL_COLUMNS = [
+    "Board_Independence",
+]
 
 
 def _get_client():
@@ -66,7 +69,11 @@ def _build_standard_frame(records):
         if column not in df.columns:
             df[column] = None
 
-    df = df[REQUIRED_COLUMNS].copy()
+    for column in OPTIONAL_COLUMNS:
+        if column not in df.columns:
+            df[column] = None
+
+    df = df[REQUIRED_COLUMNS + OPTIONAL_COLUMNS].copy()
     df = df.dropna(how="all", subset=["E_Score", "S_Score", "G_Score", "ROA", "ROE", "Net Profit Margin"])
     df = df.sort_values(by=["Year", "Industry_Type"], na_position="last").reset_index(drop=True)
     return df
@@ -103,7 +110,11 @@ def _load_from_mapped_collection(db, company_id):
         if column not in df.columns:
             df[column] = None
 
-    return df[REQUIRED_COLUMNS].copy(), None
+    for column in OPTIONAL_COLUMNS:
+        if column not in df.columns:
+            df[column] = None
+
+    return df[REQUIRED_COLUMNS + OPTIONAL_COLUMNS].copy(), None
 
 
 def _load_from_split_collections(db, firm_id=None):
@@ -126,6 +137,8 @@ def _load_from_split_collections(db, firm_id=None):
                 "E_Score": 1,
                 "S_Score": 1,
                 "G_Score": 1,
+                "board_indep_pct": 1,
+                "Board_Independence": 1,
             },
         )
     )
@@ -162,9 +175,10 @@ def _load_from_split_collections(db, firm_id=None):
         esg_df["E_Score"] = esg_df.get("E_Score", esg_df.get("e_score_raw"))
         esg_df["S_Score"] = esg_df.get("S_Score", esg_df.get("s_score_raw"))
         esg_df["G_Score"] = esg_df.get("G_Score", esg_df.get("g_score_raw"))
-        esg_df = esg_df[["firm_id", "Year", "E_Score", "S_Score", "G_Score"]]
+        esg_df["Board_Independence"] = esg_df.get("Board_Independence", esg_df.get("board_indep_pct"))
+        esg_df = esg_df[["firm_id", "Year", "E_Score", "S_Score", "G_Score", "Board_Independence"]]
     else:
-        esg_df = pd.DataFrame(columns=["firm_id", "Year", "E_Score", "S_Score", "G_Score"])
+        esg_df = pd.DataFrame(columns=["firm_id", "Year", "E_Score", "S_Score", "G_Score", "Board_Independence"])
 
     finance_df = pd.DataFrame(finance_data)
     if not finance_df.empty:
