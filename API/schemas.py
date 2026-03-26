@@ -26,3 +26,4 @@ class RiskSummary(BaseModel):
 class PredictionRequest(BaseModel):
     """Input for the Machine Learning prediction agent."""
     risk_score: float
+#    industry_type: str = Field(..., example="Energy")
