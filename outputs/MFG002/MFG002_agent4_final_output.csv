@@ -1,0 +1,11 @@
+Firm_ID,Year,Overall_Compliance,final_esg_risk_score,alert_level
+MFG002,2014,Non-Compliant,33,Warning
+MFG002,2015,Non-Compliant,33,Warning
+MFG002,2016,Non-Compliant,33,Warning
+MFG002,2017,Compliant,0,Low
+MFG002,2018,Non-Compliant,33,Warning
+MFG002,2019,Compliant,0,Low
+MFG002,2020,Non-Compliant,66,Critical
+MFG002,2021,Non-Compliant,33,Warning
+MFG002,2022,Compliant,0,Low
+MFG002,2023,Non-Compliant,33,Warning

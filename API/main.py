@@ -12,6 +12,7 @@ from API.agent2_routes import router as agent2
 from API.agent3_routes import router as agent3
 from API.agent4_routes import router as agent4
 from API.agent5_routes import router as agent5
+from API.agent1_premium_routes import router as agent1_premium_router
 
 # Import Premium Logic
 from agents.agent1_premium import run_agent1_premium
@@ -40,38 +41,39 @@ app.include_router(agent2)
 app.include_router(agent3)
 app.include_router(agent4)
 app.include_router(agent5)
+app.include_router(agent1_premium_router)
 
 # --- 💎 PREMIUM ROUTE (Fixed) ---
-@app.post("/api/premium/agent1/start")
-async def activate_premium_agent1(company_id: str = "company3"):
-    """
-    Starts the Agent 1 Premium background thread safely.
-    """
-    try:
-        # 1. Main loop ka reference lenge
-        main_loop = asyncio.get_running_loop()
+# @app.post("/api/premium/agent1/start")
+# async def activate_premium_agent1(company_id: str = "company3"):
+#     """
+#     Starts the Agent 1 Premium background thread safely.
+#     """
+#     try:
+#         # 1. Main loop ka reference lenge
+#         main_loop = asyncio.get_running_loop()
 
-        # 2. Corrected Callback: Thread-safe tareeke se emit karega
-        def socket_callback(event, data):
-            # Bina naya loop banaye, main loop par task schedule karega
-            asyncio.run_coroutine_threadsafe(sio.emit(event, data), main_loop)
+#         # 2. Corrected Callback: Thread-safe tareeke se emit karega
+#         def socket_callback(event, data):
+#             # Bina naya loop banaye, main loop par task schedule karega
+#             asyncio.run_coroutine_threadsafe(sio.emit(event, data), main_loop)
 
-        # 3. Start the watcher thread
-        thread = threading.Thread(
-            target=run_agent1_premium, 
-            args=(socket_callback, company_id)
-        )
-        thread.daemon = True
-        thread.start()
+#         # 3. Start the watcher thread
+#         thread = threading.Thread(
+#             target=run_agent1_premium, 
+#             args=(socket_callback, company_id)
+#         )
+#         thread.daemon = True
+#         thread.start()
 
-        return {
-            "status": "Success", 
-            "message": f" Agent 1 Premium streaming started for {company_id}"
-        }
-    except Exception as e:
-        return {"status": "Error", "message": str(e)}
+#         return {
+#             "status": "Success", 
+#             "message": f" Agent 1 Premium streaming started for {company_id}"
+#         }
+#     except Exception as e:
+#         return {"status": "Error", "message": str(e)}
 
-@app.get("/")
-def home():
-    return {"message": "ESG Multi-Agent API Running Successfully"}
+# @app.get("/")
+# def home():
+#     return {"message": "ESG Multi-Agent API Running Successfully"}
 
