@@ -8,3 +8,5 @@ shap
 Flask
 requests
 python-dotenv
+pymongo
+python-socketio
