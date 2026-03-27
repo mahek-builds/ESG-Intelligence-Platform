@@ -1,6 +1,7 @@
 from pathlib import Path
 
 import pandas as pd
+from agents.agent1 import sync_and_clean_pipeline
 from agents.output_paths import get_agent_output_path, get_company_name
 
 
@@ -17,9 +18,12 @@ def run_agent2(input_path=None, output_path=None, company_id=None):
     )
 
     if not source.exists():
-        return {
-            "error": f"Input file not found: {source}. Run Agent 1 first.",
-        }
+        bootstrap_result = sync_and_clean_pipeline(company_id=company_name)
+        if bootstrap_result.get("status") != "success" or not source.exists():
+            return {
+                "error": f"Input file not found: {source}. Agent 1 bootstrap failed: "
+                f"{bootstrap_result.get('message', 'unknown error')}",
+            }
 
     try:
         df = pd.read_csv(source)

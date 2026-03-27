@@ -73,7 +73,7 @@ app.include_router(agent1_premium_router)
 #     except Exception as e:
 #         return {"status": "Error", "message": str(e)}
 
-# @app.get("/")
-# def home():
-#     return {"message": "ESG Multi-Agent API Running Successfully"}
+@app.get("/")
+def home():
+    return {"message": "ESG Multi-Agent API Running Successfully"}
 

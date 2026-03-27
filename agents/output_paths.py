@@ -18,7 +18,15 @@ def get_company_name(company_name=None):
     reload_env()
     if company_name:
         return company_name
-    return os.getenv("MONGO_FIRM_ID") or os.getenv("MONGO_DB_NAME", DEFAULT_COMPANY_NAME)
+    firm_id = os.getenv("MONGO_FIRM_ID")
+    if firm_id:
+        return firm_id
+
+    db_name = os.getenv("MONGO_DB_NAME")
+    if db_name and db_name != DEFAULT_COMPANY_NAME:
+        return db_name
+
+    return DEFAULT_FIRM_ID
 
 
 def get_company_output_dir(company_name=None, input_path=None):

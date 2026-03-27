@@ -10,7 +10,7 @@ def get_agent2_results():
     
     # If the agent returned an error (like file not found)
     if isinstance(result, dict) and "error" in result:
-        raise HTTPException(status_code=404, detail=result["error"])
+        raise HTTPException(status_code=400, detail=result["error"])
         
     return {
         "status": "Agent 2 completed successfully",
