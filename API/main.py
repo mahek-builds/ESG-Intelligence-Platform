@@ -76,4 +76,3 @@ app.include_router(agent1_premium_router)
 @app.get("/")
 def home():
     return {"message": "ESG Multi-Agent API Running Successfully"}
-
